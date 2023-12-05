@@ -1,0 +1,8 @@
+IP ADDRESS CONNECTION 
+APACHE : http://35.208.148.37/
+MYSQL : http://35.208.148.37/phpmyadmin/index.php?route=/&route=%2F&db=paleapp
+NODERED : http://35.208.148.37:1880/#flow/f6f2187d.f17ca8
+
+GOOGLE CLOUD CONSOLE 
+VM FROM COMPUTE ENGINE : https://console.cloud.google.com/compute/instances?referrer=search&project=linear-pointer-402610
+FIREWALL RULE FROM NETWORK SECURITY : https://console.cloud.google.com/net-security/firewall-manager/firewall-policies/details/pale-connect?project=linear-pointer-402610
