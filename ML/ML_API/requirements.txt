@@ -1,0 +1,8 @@
+# File: requirements.txt
+# Base libraries
+
+Flask == 3.0.0
+pandas == 2.1.4
+jsonify == 0.5
+mysql-connector-python == 8.2.0
+paho-mqtt == 1.6.1
