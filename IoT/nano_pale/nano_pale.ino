@@ -43,16 +43,51 @@ void loop() {
 }
 
 float bacaSuhu(int pin) {
-  float Vo = analogRead(pin);
-  float R2 = 10000 * (1023.0 / Vo - 1.0);
-  float logR2 = log(R2);
-  float T = 1.0 / (0.001009249522 + 0.0002378405444*logR2 + 2.019202697e-07*logR2*logR2*logR2);
-  float temperature = T - 273.15;
-  return temperature;
+  const double referenceResistance = 7107.02; // Nilai resistansi referensi pada suhu 25°C
+  const double referenceTemperature = 25.0; // Suhu referensi (°C) untuk resistansi referensi
+  const double betaCoefficient = 3950.0; // Koefisien Beta NTC Thermistor
+  const double seriesResistor = 10000.0; // Nilai resistor seri pada rangkaian
+
+  // Baca nilai analog dari NTC Thermistor
+  int ntcValue = analogRead(pin);
+
+  // Konversi nilai analog menjadi resistansi NTC Thermistor
+  double resistance = seriesResistor / (1023.0 / ntcValue - 1.0);
+
+  // Hitung suhu menggunakan persamaan Steinhart-Hart
+  double steinhart;
+  steinhart = log(resistance / referenceResistance);
+  steinhart /= betaCoefficient;
+  steinhart += 1.0 / (referenceTemperature + 273.15);
+  steinhart = 1.0 / steinhart - 273.15;
+
+  // Kalibrasi suhu jika diperlukan
+  double calibratedTemperature = kalibrasiSuhu(steinhart);
+
+  // Tampilkan hasil di Serial Monitor
+//  Serial.print("ADC Value: ");
+//  Serial.print(ntcValue);
+//  Serial.print(", Resistance: ");
+//  Serial.print(resistance);
+//  Serial.print(" Ohms, Temperature: ");
+//  Serial.print(calibratedTemperature);
+//  Serial.println(" °C");
+  
+  return calibratedTemperature;
+}
+
+// Fungsi untuk kalibrasi suhu sesuai kebutuhan Anda
+double kalibrasiSuhu(double suhuAwal) {
+  // Tambahkan logika kalibrasi di sini
+  // Contoh: return suhuAwal + offset;
+  // Tambahkan logika kalibrasi di sini
+  // Contoh: return suhuAwal + offset;
+  double offset = 0.0; // Sesuaikan dengan nilai offset yang diperlukan
+  return suhuAwal + offset;
 }
 
 float bacaAmmonia(int pin) {
-  float VRL = analogRead(pin) * (3.3 / 1023.0);
+  float VRL = analogRead(pin) * (3.3 / 10230);
   float RS = (3.3 / VRL - 1) * 10;
   float Ro = 28; // Ganti dengan nilai RO yang sesuai
   float ratio = RS / Ro;
@@ -61,9 +96,19 @@ float bacaAmmonia(int pin) {
 }
 
 float bacaPh(int pin) {
+  // Baca nilai analog dari sensor pH
   int adcPH = analogRead(pin);
+
+  // Konversi nilai analog menjadi tegangan
   float voltage = adcPH * (5.0 / 1023.0);
-  float pHValue = (6.4516 * voltage) - 5.7742;
+
+  // Konversi tegangan menjadi nilai pH
+  // Sesuaikan kemiringan (slope) dan offset sesuai dengan karakteristik sensor Anda
+  float pHValue = 7.0 - (voltage - 2.5); // Contoh sederhana, sesuaikan sesuai karakteristik sensor Anda
+
+  // Pastikan nilai pH berada dalam rentang 0-14
+  pHValue = constrain(pHValue, 0.0, 14.0);
+
   return pHValue;
 }
 
