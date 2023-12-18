@@ -1,0 +1,117 @@
+Dokumentasi Cloud Computing
+
+1. create vm on compute engine
+1) name: paleapp
+2) machine type: e2-medium-1-2 vCPU (1 shared core)-4gb
+3) firewalls: allow http traffic, allow https traffic
+4) storage: ubuntu-2204-jammy-v20231213a-25 GB
+5) access scopes: allow full access to all Cloud APIs
+
+2. build mqtt server:
+1) sudo apt update
+2) sudo apt upgrade
+3) sudo apt-get install mosquitto mosquitto-clients
+4) sudo mosquitto -v
+5) sudo systemctl enable mosquitto.services
+6) mosquitto_sub -d -t "hexadata/update"
+7) sudo nano /etc/mosquitto/mosquitto.conf
+--add this config to under file 
+listener 1883
+allow_anonymous true
+8) sudo reboot
+
+3. create firewall rule:
+1) name : pale-all
+2) targets : all instances in the network
+3) source ipv4 ranges : 0.0.0.0/0
+4) protocols and ports : allow all
+5) sudo systemctl status mosquitto
+
+4. install docker for node-red:
+1) sudo apt update
+2) sudo apt-get install apt-transport-https ca-certificates curl software-properties-common
+3) curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+4) sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+5) sudo apt update
+6) sudo apt-get install docker-ce
+7) sudo docker run --restart=always -d -p 1880:1880 nodered/node-red
+
+5. install mysql:
+1) sudo apt update
+2) sudo apt install mysql-server
+3) sudo mysql -u root -p
+- mysql> CREATE USER 'pale'@'%' IDENTIFIED BY 'Pale123!';
+Query OK, 0 rows affected (0.01 sec)
+- mysql> GRANT ALL PRIVILEGES ON *.* TO 'pale'@'%';
+Query OK, 0 rows affected (0.01 sec)
+- mysql> FLUSH PRIVILEGES;
+Query OK, 0 rows affected (0.00 sec)
+- mysql> nano /etc/mysql/mysql.conf.d/mysqld.cnf 
+
+[mysqld]
+#
+# * Basic Settings
+#
+user            = mysql
+# pid-file      = /var/run/mysqld/mysqld.pid
+# socket        = /var/run/mysqld/mysqld.sock
+port            = 3306
+# datadir       = /var/lib/mysql
+
+
+# If MySQL is running as a replication slave, this should be
+# changed. Ref https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_tmpdir
+# tmpdir                = /tmp
+#
+# Instead of skip-networking the default is now to listen only on
+# localhost which is more compatible and is not less secure.
+# bind-address          = 127.0.0.1
+bind-address            = 0.0.0.0
+# mysqlx-bind-address   = 127.0.0.1
+#
+# * Fine Tuning
+#
+key_buffer_size         = 16M
+# max_allowed_packet    = 64M
+
+CREATE TABLE pale_db.pale_table (
+   id INT AUTO_INCREMENT PRIMARY KEY,
+   timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+   Temperature_NTC FLOAT,
+   Ammonia_MQ135 FLOAT,
+   Ph_Sensor FLOAT
+);
+
+6. mysql workbench :
+-MySQL [pale_db]> CREATE TABLE pale_db.pale_table (
+    ->    id INT AUTO_INCREMENT PRIMARY KEY,
+    ->    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ->    Temperature_NTC FLOAT,
+    ->    Ammonia_MQ135 FLOAT,
+    ->    Ph_Sensor FLOAT
+    -> );
+Query OK, 0 rows affected (0.292 sec)
+CREATE TABLE pale_db.pale_tables (
+   id INT AUTO_INCREMENT PRIMARY KEY,
+   timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+   Temperature_NTC FLOAT,
+   Ammonia_MQ135 FLOAT,
+   Ph_Sensor FLOAT
+);
+
+-MySQL [pale_db]> CREATE TABLE pale_db.pale_tables (
+    ->    id INT AUTO_INCREMENT PRIMARY KEY,
+    ->    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ->    Temperature_NTC FLOAT,
+    ->    Ammonia_MQ135 FLOAT,
+    ->    Ph_Sensor FLOAT
+    -> );
+Query OK, 0 rows affected (0.292 sec)
+
+mysql> select * from pale_db.pale_tables;
++----+---------------------+-----------------+---------------+-----------+
+| id | timestamp           | Temperature_NTC | Ammonia_MQ135 | Ph_Sensor |
++----+---------------------+-----------------+---------------+-----------+
+| 82 | 2023-12-18 09:52:36 |           20.26 |          0.11 |     12.51 |
+| 83 | 2023-12-18 09:52:41 |           26.28 |          0.11 |     12.51 |
+| 84 | 2023-12-18 10:01:09 |           26.37 |           0.1 |     12.45 |
