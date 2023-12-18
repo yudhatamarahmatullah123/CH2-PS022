@@ -9,7 +9,7 @@ const char *ssid           = "BEJE";
 const char *password       = "latiefganteng";
 
 // Konfigurasi MQTT
-const char *mqtt_server    = "35.225.93.196";
+const char *mqtt_server    = "34.31.59.23";
 const int  mqtt_port       = 1883;
 const char *mqtt_username  = "pale";
 const char *mqtt_password  = "Pale123!";
@@ -89,7 +89,7 @@ void connectMQTT() {
   while (!client.connected()) {
     if (client.connect("NodeMCU_Client", mqtt_username, mqtt_password)) {
       Serial.println("Connected to MQTT");
-      client.subscribe("room/light");
+      client.subscribe("katup");
     } else {
       delay(1000);
       Serial.println("Connecting to MQTT...");
@@ -111,8 +111,8 @@ void callback(char* topic, byte* message, unsigned int length) {
   Serial.println();
 
   // If a message is received on the topic room/lamp, you check if the message is either on or off. Turns the lamp GPIO according to the message
-  if(strcmp(topic, "room/light") == 0){
-      Serial.print("Changing Room Light to ");
+  if(strcmp(topic, "katup") == 0){
+      Serial.print("Changing katup to ");
       if(messageInfo == "on"){
         digitalWrite(ledPin, HIGH);
         Serial.print("On");
