@@ -6,3 +6,4 @@ pandas == 2.1.4
 jsonify == 0.5
 mysql-connector-python == 8.2.0
 paho-mqtt == 1.6.1
+scikit-learn == 1.2.2
