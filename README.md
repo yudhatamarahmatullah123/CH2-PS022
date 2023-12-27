@@ -14,4 +14,4 @@ Capstone Project CH2-PS022
   | C229BSY3262 | Kusuma Dewa Yudhistira      | Cloud Computing    | Universitas Jenderal Soedirman          |
   | C421BSX3752 | Alisha Nathania Septianty   | Cloud Computing    | STMIK Widya Utama                       |
   | A120BSY2035 | M. Nur Aqil Bahri           | Mobile Development | Institut Teknologi Telkom Purwokerto    |
-  | A120BSY2035 | Yudhatama Gusdi Rahmatullah | Mobile Development | Universitas Darussalam Gontor           |
+  | A198BSY1933 | Yudhatama Gusdi Rahmatullah | Mobile Development | Universitas Darussalam Gontor           |
