@@ -1,74 +1,62 @@
 from flask import Flask, jsonify
 import pickle
 import pandas as pd
-import logging
 import mysql.connector
-import threading
-import time
 import paho.mqtt.publish as publish
+import json
+import os
+import logging
 
 app = Flask(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
-# Variabel global untuk menyimpan data terbaru
 latest_data = pd.DataFrame()
 
 try:
     cluster_model = pickle.load(open('cluster_model.pkl', 'rb'))
-    alert = pickle.load(open('alert_rules.pkl', 'rb'))
     rules = pickle.load(open('rules_model.pkl', 'rb'))
 except Exception as e:
     logging.error(f"Error loading models: {e}")
     raise e
 
 db_config = {
-    'host': '35.225.93.196',
+    'host': '34.31.59.23',
     'user': 'pale',
     'password': 'Pale123!',
     'database': 'pale_db'
 }
 def fetch_and_process_data():
     global latest_data
+    try:
+        connection = mysql.connector.connect(**db_config)
+        if connection.is_connected():
+            cursor = connection.cursor(dictionary=True)
+            # Query SQL Anda
+            query = "SELECT * FROM pale_db.pale_tables;"
 
-    while True:
-        try:
-            connection = mysql.connector.connect(**db_config)
+            cursor.execute(query)
+            data = cursor.fetchall()
+            cursor.close()
+            df = pd.DataFrame(data)
+            # slice data
+            df = df[df.columns[2:5]]
+            print(df)
+            df.columns = ['Suhu', 'pH', 'Amonia']
+            df = apply_thresholds(df)
+            df = cluster(df, cluster_model)
+            df['Binary Pattern'], df['Readable Pattern'] = zip(*df.apply(get_pattern, axis=1))
 
-            if connection.is_connected():
-                cursor = connection.cursor(dictionary=True)
-
-                # Query SQL Anda
-                query = "SELECT * FROM pale_db.pale_tables;"
-
-                cursor.execute(query)
-                data = cursor.fetchall()
-                cursor.close()
-                df = pd.DataFrame(data)
-
-                # Proses data sesuai dengan kode yang sudah ada
-                df = df[df.columns[2:5]]
-                df.columns = ['Suhu', 'pH', 'Amonia']
-                df = apply_thresholds(df)
-                df = cluster(df, cluster_model)
-                df['Binary Pattern'], df['Readable Pattern'] = zip(*df.apply(get_pattern, axis=1))
-
-                # Perbarui variabel global dengan data yang sudah diproses terbaru
-                latest_data = df.copy()
-        except mysql.connector.Error as err:
-            logging.error(f'Error fetching data: {err}')
-
-data_thread = threading.Thread(target=fetch_and_process_data)
-data_thread.daemon = True
-data_thread.start()
+            # Perbarui variabel global dengan data yang sudah diproses terbaru
+            latest_data = df.copy()
+    except mysql.connector.Error as err:
+        logging.error(f'Error fetching data: {err}')
 
 @app.route('/predict', methods=['GET', 'POST'])
 def predict():
+    fetch_and_process_data()
     try:
         global latest_data
-
-        # Gunakan data yang sudah diproses terbaru untuk prediksi
         df = latest_data.copy()
-
         pattern = []
         warning = []
 
@@ -79,7 +67,11 @@ def predict():
                 warning.append(int(1))
             else:
                 warning.append(int(0))
-        #publish.single("sensor_servo", warning, hostname="35.225.93.196")
+        for i in warning:
+            if i == 1:
+               send_mqtt_message('on')
+            else:
+                send_mqtt_message('off')
         return jsonify({"Status": warning})
 
     except Exception as e:
@@ -118,5 +110,14 @@ def cluster(df,loaded_model):
     df['Condition'] = loaded_model.predict(df[df.columns[3:7]])
     return df
 
+def send_mqtt_message(warning):
+    #payload = json.dumps(warning)
+    publish.single("katup", warning, hostname="34.31.59.23", port=1883, auth={
+        'username': 'pale',
+        'password': 'Pale123!'
+    })
+
+
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=int(os.environ.get('PORT', 8080)))
